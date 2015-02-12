@@ -5,12 +5,19 @@
 
 /* Congestion controller interface */
 
+#if 0
+#define INITIAL_WINDOW_SIZE (5)
+#endif
+
+#define INITIAL_WINDOW_SIZE (5)
+
 class Controller
 {
 private:
   bool debug_; /* Enables debugging output */
 
   /* Add member variables here */
+  unsigned int window_size_ = INITIAL_WINDOW_SIZE;
 
 public:
   /* Public interface for the congestion controller */

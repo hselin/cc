@@ -1,0 +1,6 @@
+[sudo] password for hselin: 
+hselin@hydrogen:~/share/sourdough/datagrump$ sudo sysctl -w net.ipv4.ip_forward=1
+[sudo] password for hselin: 
+no talloc stackframe at ../source3/param/loadparm.c:4864, leaking memory
+net.ipv4.ip_forward = 1
+
