@@ -104,8 +104,8 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
     this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
 #endif
 
-  if(diff < (uint64_t)70)
-    this->window_size_ = MIN(this->window_size_ + 2, 20);
+  if(diff < (uint64_t)66)
+    this->window_size_ = MIN(this->window_size_ + 1, 20);
   else
     this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
 
@@ -121,5 +121,11 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
    before sending one more datagram */
 unsigned int Controller::timeout_ms( void )
 {
-  return 800; /* timeout of one second */
+
+  if( 0)
+  {
+    printf("timeout_ms: %u\n", 0);
+  }
+
+  return 250; /* timeout of one second */
 }
