@@ -9,7 +9,7 @@
 #define INITIAL_WINDOW_SIZE (5)
 #endif
 
-#define INITIAL_WINDOW_SIZE (5)
+#define INITIAL_WINDOW_SIZE (7)
 
 class Controller
 {

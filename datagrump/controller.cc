@@ -76,9 +76,10 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 	 << endl;
   }
 
-  uint64_t diff = (send_timestamp_acked - recv_timestamp_acked);
+  //uint64_t diff = (send_timestamp_acked - recv_timestamp_acked);
+  uint64_t diff = (timestamp_ack_received - send_timestamp_acked);
 
-  if( debug_)
+  if( 0)
   {
     printf("DIFF: %lu\n", diff);
   }
@@ -104,11 +105,13 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 #endif
 
   if(diff < (uint64_t)70)
-    this->window_size_ = MIN(this->window_size_ + 2, 21);
+    this->window_size_ = MIN(this->window_size_ + 2, 20);
   else
-    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 4), 1);
+    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
 
-  if( debug_)
+  
+
+  if( 0)
   {
     printf("this->window_size_: %u\n", this->window_size_);
   }
