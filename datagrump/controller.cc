@@ -10,17 +10,20 @@ Controller::Controller( const bool debug )
   : debug_( debug )
 { debug_ = false; }
 
+#define MAX(x, y) ((x > y) ? (x) : (y))
+#define MIN(x, y) ((x < y) ? (x) : (y))
 
-
+#define TARGET_MAX_LATENCY      (70)
+#define alpha                   (0.1)
 
 
 /* Get current window size, in datagrams */
 unsigned int Controller::window_size( void )
 {
-  //printf("this->window_size_: %d\n", this->window_size_);
-  return this->window_size_;
+  //rintf("this->window_size_: %d\n", this->window_size_);
 
-  //return 15;
+
+  return this->window_size_;
 }
 
 #if 0
@@ -53,8 +56,8 @@ void Controller::datagram_was_sent( const uint64_t sequence_number,
   }
 }
 
-#define MAX(x, y) ((x > y) ? (x) : (y))
-#define MIN(x, y) ((x < y) ? (x) : (y))
+
+
 
 /* An ack was received */
 void Controller::ack_received( const uint64_t sequence_number_acked,
@@ -76,40 +79,33 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 	 << endl;
   }
 
-  //uint64_t diff = (send_timestamp_acked - recv_timestamp_acked);
-  uint64_t diff = (timestamp_ack_received - send_timestamp_acked);
+  //this->most_recent_rtt_ = (timestamp_ack_received - send_timestamp_acked);
 
-  if( 0)
+  uint64_t diff  = 0;
+
+  if(this->prev_recv_timestamp_acked_)
   {
-    printf("DIFF: %lu\n", diff);
+    diff = recv_timestamp_acked - this->prev_recv_timestamp_acked_;
   }
 
-#if 0
-  if(diff < (uint64_t)70)
-    this->window_size_ = MIN(this->window_size_ + 2, 22);
-  else
-    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
-#endif
-
-#if 0
-  if(diff < (uint64_t)70)
-    this->window_size_ = MIN(this->window_size_ + 2, 21);
-  else
-    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
-#endif
-#if 0
-  if(diff < (uint64_t)70)
-    this->window_size_ = MIN(this->window_size_ + 2, 21);
-  else
-    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
-#endif
-
-  if(diff < (uint64_t)66)
-    this->window_size_ = MIN(this->window_size_ + 1, 20);
-  else
-    this->window_size_ = (unsigned int)MAX((int)(this->window_size_ - 5), 2);
-
+  this->prev_recv_timestamp_acked_ = recv_timestamp_acked;
   
+
+  if(diff < TARGET_MAX_LATENCY)
+  {
+    this->window_size_ = (unsigned int) MIN(this->window_size_ + 2, 20);
+  }
+  else
+  {
+    this->window_size_ = (unsigned int) MAX((int)(this->window_size_ - 5), 2);
+  }
+
+
+  if(1)
+  {
+    printf("this->most_recent_rtt_: %lu\n", diff);
+  }
+
 
   if( 0)
   {

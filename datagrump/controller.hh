@@ -10,6 +10,7 @@
 #endif
 
 #define INITIAL_WINDOW_SIZE (5)
+#define MAX_WINDOW_SIZE (21)
 
 class Controller
 {
@@ -18,6 +19,13 @@ private:
 
   /* Add member variables here */
   unsigned int window_size_ = INITIAL_WINDOW_SIZE;
+  unsigned int max_window_size_ = MAX_WINDOW_SIZE;
+
+
+  uint64_t prev_recv_timestamp_acked_ = 0;
+
+  uint64_t most_recent_rtt_ = 0;
+  uint64_t ema_rtt_ = 0; 
 
 public:
   /* Public interface for the congestion controller */
