@@ -13,7 +13,7 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (80.0f)
+#define TARGET_MAX_LATENCY      (35.0f)
 #define BW_SMOOTHING_ALPHA      (0.05f)
 
 
@@ -102,7 +102,12 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 
   if(elapsed_time == 0)
   {
-    sample_bw = 500.00f;
+    if(this->estimated_bw_ == 0)
+      sample_bw = 2000.00f;
+    else
+      sample_bw = this->estimated_bw_ ;
+
+    sample_bw = 2000.00f;
   }
   else
   {
@@ -164,16 +169,17 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
     target_window_size = target_amount_of_outstanding_packets - num_outstanding_packets;
   }
 
-#if 0
+#if 1
   if(this->window_size_ > target_window_size)
   {
-    printf("DEC: %lu\n", ((this->window_size_ - target_window_size) / 2));
-    this->window_size_ -= ((this->window_size_ - target_window_size) / 2);
+    printf("DEC: %lu\n", MIN(((this->window_size_ - target_window_size) / 2), 2));
+    this->window_size_ -= MIN(((this->window_size_ - target_window_size) / 2), 2);
+    //this->window_size_ = target_window_size;
   }
   else
   {
-    printf("INC: %lu\n", ((target_window_size - this->window_size_) / 5));
-    this->window_size_ += ((target_window_size - this->window_size_) / 5);
+    printf("INC: %lu\n", MAX(((target_window_size - this->window_size_) / 5), 2));
+    this->window_size_ += MAX(((target_window_size - this->window_size_) / 5), 2);
   }
 #endif
 
@@ -185,7 +191,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
     this->window_size_ = 20;
 #endif
 
-  this->window_size_ = target_window_size;
+  //this->window_size_ = target_window_size;
 
   if(0)
   {
