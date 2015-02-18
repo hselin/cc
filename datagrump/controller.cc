@@ -13,14 +13,14 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (35.0f)
-#define BW_SMOOTHING_ALPHA      (0.05f)
+#define TARGET_MAX_LATENCY      (20.0f)
+#define BW_SMOOTHING_ALPHA      (0.35f)
 
 
 /* Get current window size, in datagrams */
 unsigned int Controller::window_size( void )
 {
-  printf("this->window_size_: %d\n", this->window_size_);
+  //printf("this->window_size_: %d\n", this->window_size_);
 
   //return 25;
   return this->window_size_;
@@ -100,6 +100,9 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 
   this->prev_recv_timestamp_acked_ = recv_timestamp_acked;
 
+  //elapsed_time = (timestamp_ack_received - send_timestamp_acked) / 2;
+
+
   if(elapsed_time == 0)
   {
     if(this->estimated_bw_ == 0)
@@ -107,7 +110,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
     else
       sample_bw = this->estimated_bw_ ;
 
-    sample_bw = 2000.00f;
+    sample_bw = 5500.00f;
   }
   else
   {
@@ -119,9 +122,10 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   //printf("ack_payload_length = %lu elapsed_time = %f\n", ack_payload_length, elapsed_time);
 
 
+  printf("%lu,%f\n", timestamp_ack_received / 1000, this->estimated_bw_ * (float)8 / (float)1000000);
 
 
-  printf("bw [%f, %f]\n", sample_bw, this->estimated_bw_);
+  //printf("bw [%f, %f]\n", sample_bw, this->estimated_bw_);
 
 
   target_amount_of_outstanding_data = (TARGET_MAX_LATENCY * this->estimated_bw_);
@@ -172,14 +176,13 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 #if 1
   if(this->window_size_ > target_window_size)
   {
-    printf("DEC: %lu\n", MIN(((this->window_size_ - target_window_size) / 2), 2));
-    this->window_size_ -= MIN(((this->window_size_ - target_window_size) / 2), 2);
-    //this->window_size_ = target_window_size;
+    //printf("DEC: %lu\n", MAX(((this->window_size_ - target_window_size) / 2), 3));
+    this->window_size_ -= MIN(((this->window_size_ - target_window_size) / 2), this->window_size_);
   }
   else
   {
-    printf("INC: %lu\n", MAX(((target_window_size - this->window_size_) / 5), 2));
-    this->window_size_ += MAX(((target_window_size - this->window_size_) / 5), 2);
+    //printf("INC: %lu\n", MAX(((target_window_size - this->window_size_) / 2), 5));
+    this->window_size_ += MAX(((target_window_size - this->window_size_) / 2), 10);
   }
 #endif
 
@@ -192,6 +195,11 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 #endif
 
   //this->window_size_ = target_window_size;
+
+  //printf("this->window_size_: %u\n", this->window_size_);
+
+
+  this->window_size_ = MAX(this->window_size_, 10);
 
   if(0)
   {
@@ -215,5 +223,5 @@ unsigned int Controller::timeout_ms( void )
     printf("timeout_ms: %u\n", 0);
   }
 
-  return 250; /* timeout of one second */
+  return 100; /* timeout of one second */
 }
