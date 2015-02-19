@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 
 #include "controller.hh"
 #include "timestamp.hh"
@@ -22,8 +23,8 @@ unsigned int Controller::window_size( void )
 {
   //printf("this->window_size_: %d\n", this->window_size_);
 
-  //return 25;
-  return this->window_size_;
+  return 2;
+  //return this->window_size_;
 }
 
 #if 0
@@ -85,13 +86,86 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 
   //this->most_recent_rtt_ = (timestamp_ack_received - send_timestamp_acked);
 
-  uint64_t elapsed_time = 0;
+  
   float sample_bw = 0;
   uint64_t target_amount_of_outstanding_data = 0;
   uint64_t target_amount_of_outstanding_packets = 0;
   uint64_t num_outstanding_packets = 0;
   uint64_t target_window_size = 0;
 
+  uint64_t start_of_current_time_slice = this->current_time_slice_ * TIME_SLICE_AMOUNT;
+  uint64_t start_of_next_time_slice = start_of_current_time_slice + TIME_SLICE_AMOUNT;
+
+  if(recv_timestamp_acked < start_of_current_time_slice)
+  {
+    printf("!!!!!!!!!!!!!!! %lu %lu\n", recv_timestamp_acked, start_of_current_time_slice);
+    return;
+  }
+
+  if(recv_timestamp_acked < start_of_next_time_slice)
+  {
+    uint64_t ms_spent_in_current_time_slice = 0;
+
+    //still within current time slice
+    ms_spent_in_current_time_slice = recv_timestamp_acked - start_of_current_time_slice;
+    this->bytes_sent_in_current_time_slice_ += ack_payload_length;
+
+    printf("[%lu | %lu]\n", this->bytes_sent_in_current_time_slice_, ms_spent_in_current_time_slice);
+
+    if(ms_spent_in_current_time_slice == 0)
+    {
+      sample_bw = 5500.00f;
+    }
+    else
+    {
+      sample_bw = ((float) this->bytes_sent_in_current_time_slice_ / (float)ms_spent_in_current_time_slice);
+    }
+  }
+  else
+  {
+    uint64_t new_time_slice = recv_timestamp_acked / TIME_SLICE_AMOUNT;
+    uint64_t start_of_new_time_slice = new_time_slice * TIME_SLICE_AMOUNT;
+    uint64_t ms_spent_in_new_time_slice = recv_timestamp_acked - start_of_new_time_slice;
+    uint64_t elapsed_time_slice = new_time_slice - this->current_time_slice_;
+    uint64_t total_elapsed_time = 0;
+    uint64_t total_bytes_sent = 0;
+
+    assert(new_time_slice > this->current_time_slice_);
+    
+    if(elapsed_time_slice > 1)
+    {
+      printf("@@@@@@@@@\n");
+
+      total_elapsed_time = (elapsed_time_slice * TIME_SLICE_AMOUNT) + ms_spent_in_new_time_slice;
+      total_bytes_sent = ack_payload_length + this->bytes_sent_in_current_time_slice_; 
+
+    }
+    else
+    {
+      total_elapsed_time = ms_spent_in_new_time_slice;
+      total_bytes_sent = ack_payload_length; 
+    }
+
+
+    this->current_time_slice_ = new_time_slice;
+    this->bytes_sent_in_current_time_slice_ = ack_payload_length;
+
+    if(total_elapsed_time == 0)
+    {
+      sample_bw = 5500.00f;
+    }
+    else
+    {
+      sample_bw = ((float) total_bytes_sent / (float)total_elapsed_time);
+    }
+  }
+
+
+
+
+
+
+  #if 0
 
   if(this->prev_recv_timestamp_acked_)
   {
@@ -116,6 +190,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   {
     sample_bw = ((float) ack_payload_length / (float)elapsed_time);
   }
+  #endif
 
   this->estimated_bw_ = (BW_SMOOTHING_ALPHA * this->estimated_bw_) + ((1.0f - BW_SMOOTHING_ALPHA) * sample_bw);
 

@@ -9,8 +9,11 @@
 #define INITIAL_WINDOW_SIZE (5)
 #endif
 
-#define INITIAL_WINDOW_SIZE (100)
+#define INITIAL_WINDOW_SIZE (50000)
 #define MAX_WINDOW_SIZE (21)
+
+
+#define TIME_SLICE_AMOUNT       (50)
 
 class Controller
 {
@@ -20,6 +23,11 @@ private:
   /* Add member variables here */
   unsigned int window_size_ = INITIAL_WINDOW_SIZE;
   unsigned int max_window_size_ = MAX_WINDOW_SIZE;
+
+
+  uint64_t current_time_slice_ = 0;
+  uint64_t bytes_sent_in_current_time_slice_ = 0;
+  uint64_t ms_spent_in_current_time_slice_ = 0;
 
   uint64_t last_sent_packet_sequence_number_ = 0;
   uint64_t prev_recv_timestamp_acked_ = 0;
