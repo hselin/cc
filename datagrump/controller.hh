@@ -9,11 +9,11 @@
 #define INITIAL_WINDOW_SIZE (5)
 #endif
 
-#define INITIAL_WINDOW_SIZE (50000)
+#define INITIAL_WINDOW_SIZE (25)
 #define MAX_WINDOW_SIZE (21)
 
 
-#define TIME_SLICE_AMOUNT       (50)
+
 
 class Controller
 {
@@ -35,6 +35,7 @@ private:
   float estimated_bw_ = 0;
 
 
+  uint64_t rtt_estimate_ = 100;
 
   uint64_t most_recent_rtt_ = 0;
   uint64_t ema_rtt_ = 0; 
@@ -59,11 +60,14 @@ public:
 		     const uint64_t send_timestamp_acked,
 		     const uint64_t recv_timestamp_acked,
 		     const uint64_t timestamp_ack_received,
-         const uint64_t ack_payload_length);
+         const uint64_t ack_payload_length,
+         const float estimated_bw);
 
   /* How long to wait (in milliseconds) if there are no acks
      before sending one more datagram */
   unsigned int timeout_ms( void );
+
+  bool send_datagram(void);
 };
 
 #endif

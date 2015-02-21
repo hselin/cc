@@ -14,17 +14,35 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (20.0f)
-#define BW_SMOOTHING_ALPHA      (0.35f)
+#define TARGET_MAX_LATENCY      (30.0f)
 
+#define RTT_SMOOTHING_ALPHA     (0.3f)
+
+
+bool moo = true;
+
+bool Controller::send_datagram(void)
+{
+
+#if 0
+  if(this->window_size_)
+    this->window_size_ = 0;
+  else
+    this->window_size_ = 1000000;
+
+  return true;
+#endif
+
+  return moo;
+}
 
 /* Get current window size, in datagrams */
 unsigned int Controller::window_size( void )
 {
-  //printf("this->window_size_: %d\n", this->window_size_);
+  printf("this->window_size_: %d\n", this->window_size_);
 
-  return 2;
-  //return this->window_size_;
+  //return 25000000;
+  return this->window_size_;
 }
 
 #if 0
@@ -57,10 +75,13 @@ void Controller::datagram_was_sent( const uint64_t sequence_number,
   }
 
   this->last_sent_packet_sequence_number_ = sequence_number;
+
+  //this->window_size_ = MAX((int)this->window_size_ - 1, 1); 
 }
 
 
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+
 
 /* An ack was received */
 void Controller::ack_received( const uint64_t sequence_number_acked,
@@ -71,7 +92,8 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 			       /* when the acknowledged datagram was received (receiver's clock)*/
 			       const uint64_t timestamp_ack_received,
                                /* when the ack was received (by sender) */
-             const uint64_t ack_payload_length)
+             const uint64_t ack_payload_length,
+             const float estimated_bw)
 {
   /* Default: take no action */
 
@@ -84,207 +106,51 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 	 << endl;
   }
 
-  //this->most_recent_rtt_ = (timestamp_ack_received - send_timestamp_acked);
-
-  
-  float sample_bw = 0;
-  uint64_t target_amount_of_outstanding_data = 0;
-  uint64_t target_amount_of_outstanding_packets = 0;
-  uint64_t num_outstanding_packets = 0;
-  uint64_t target_window_size = 0;
-
-  uint64_t start_of_current_time_slice = this->current_time_slice_ * TIME_SLICE_AMOUNT;
-  uint64_t start_of_next_time_slice = start_of_current_time_slice + TIME_SLICE_AMOUNT;
-
-  if(recv_timestamp_acked < start_of_current_time_slice)
+  if(this->last_sent_packet_sequence_number_ < sequence_number_acked)
   {
-    printf("!!!!!!!!!!!!!!! %lu %lu\n", recv_timestamp_acked, start_of_current_time_slice);
-    return;
+    printf("ERROR: %lu %lu\n", this->last_sent_packet_sequence_number_, sequence_number_acked);
   }
 
-  if(recv_timestamp_acked < start_of_next_time_slice)
-  {
-    uint64_t ms_spent_in_current_time_slice = 0;
+  assert(this->last_sent_packet_sequence_number_ >= sequence_number_acked);
 
-    //still within current time slice
-    ms_spent_in_current_time_slice = recv_timestamp_acked - start_of_current_time_slice;
-    this->bytes_sent_in_current_time_slice_ += ack_payload_length;
+  __attribute__((__unused__)) uint64_t elapsed_time_between_ack_packets;
+  uint64_t rtt_sample;
 
-    printf("[%lu | %lu]\n", this->bytes_sent_in_current_time_slice_, ms_spent_in_current_time_slice);
+  rtt_sample = (timestamp_ack_received - send_timestamp_acked);
 
-    if(ms_spent_in_current_time_slice == 0)
-    {
-      sample_bw = 5500.00f;
-    }
-    else
-    {
-      sample_bw = ((float) this->bytes_sent_in_current_time_slice_ / (float)ms_spent_in_current_time_slice);
-    }
-  }
-  else
-  {
-    uint64_t new_time_slice = recv_timestamp_acked / TIME_SLICE_AMOUNT;
-    uint64_t start_of_new_time_slice = new_time_slice * TIME_SLICE_AMOUNT;
-    uint64_t ms_spent_in_new_time_slice = recv_timestamp_acked - start_of_new_time_slice;
-    uint64_t elapsed_time_slice = new_time_slice - this->current_time_slice_;
-    uint64_t total_elapsed_time = 0;
-    uint64_t total_bytes_sent = 0;
-
-    assert(new_time_slice > this->current_time_slice_);
-    
-    if(elapsed_time_slice > 1)
-    {
-      printf("@@@@@@@@@\n");
-
-      total_elapsed_time = (elapsed_time_slice * TIME_SLICE_AMOUNT) + ms_spent_in_new_time_slice;
-      total_bytes_sent = ack_payload_length + this->bytes_sent_in_current_time_slice_; 
-
-    }
-    else
-    {
-      total_elapsed_time = ms_spent_in_new_time_slice;
-      total_bytes_sent = ack_payload_length; 
-    }
-
-
-    this->current_time_slice_ = new_time_slice;
-    this->bytes_sent_in_current_time_slice_ = ack_payload_length;
-
-    if(total_elapsed_time == 0)
-    {
-      sample_bw = 5500.00f;
-    }
-    else
-    {
-      sample_bw = ((float) total_bytes_sent / (float)total_elapsed_time);
-    }
-  }
-
-
-
-
-
-
-  #if 0
 
   if(this->prev_recv_timestamp_acked_)
   {
-    elapsed_time = recv_timestamp_acked - this->prev_recv_timestamp_acked_;
+    elapsed_time_between_ack_packets = recv_timestamp_acked - this->prev_recv_timestamp_acked_;
   }
 
   this->prev_recv_timestamp_acked_ = recv_timestamp_acked;
 
-  //elapsed_time = (timestamp_ack_received - send_timestamp_acked) / 2;
-
-
-  if(elapsed_time == 0)
-  {
-    if(this->estimated_bw_ == 0)
-      sample_bw = 2000.00f;
-    else
-      sample_bw = this->estimated_bw_ ;
-
-    sample_bw = 5500.00f;
-  }
-  else
-  {
-    sample_bw = ((float) ack_payload_length / (float)elapsed_time);
-  }
-  #endif
-
-  this->estimated_bw_ = (BW_SMOOTHING_ALPHA * this->estimated_bw_) + ((1.0f - BW_SMOOTHING_ALPHA) * sample_bw);
-
-  //printf("ack_payload_length = %lu elapsed_time = %f\n", ack_payload_length, elapsed_time);
-
-
-  printf("%lu,%f\n", timestamp_ack_received / 1000, this->estimated_bw_ * (float)8 / (float)1000000);
-
-
-  //printf("bw [%f, %f]\n", sample_bw, this->estimated_bw_);
-
-
-  target_amount_of_outstanding_data = (TARGET_MAX_LATENCY * this->estimated_bw_);
-
   
-  //printf("target_amount_of_outstanding_data [%lu]\n", target_amount_of_outstanding_data);
+  //printf("elapsed_time_between_ack_packets:%lu rtt_sample:%lu\n", elapsed_time_between_ack_packets, rtt_sample);
 
-  target_amount_of_outstanding_packets = DIV_ROUND_UP(target_amount_of_outstanding_data, ack_payload_length);
 
-  //printf("target_amount_of_outstanding_packets [%lu]\n", target_amount_of_outstanding_packets);
+  this->rtt_estimate_ = (RTT_SMOOTHING_ALPHA * this->rtt_estimate_) + ((1.0f - RTT_SMOOTHING_ALPHA) * rtt_sample);
 
-  /*
-  if(diff < TARGET_MAX_LATENCY)
+  //printf("BW @ %lu : %f\n", timestamp_ack_received / 1000, estimated_bw  * 8 / 1024);
+
+  uint64_t outstanding_data_capacity = (TARGET_MAX_LATENCY * estimated_bw);
+  uint64_t outstanding_packet_capacity = outstanding_data_capacity / ack_payload_length;
+  uint64_t num_outstanding_packets = this->last_sent_packet_sequence_number_ - sequence_number_acked;
+
+  //printf("[%lu / %lu]\n", num_outstanding_packets, outstanding_packet_capacity);
+
+  if(outstanding_packet_capacity > num_outstanding_packets)
   {
-    this->window_size_ = (unsigned int) MIN(this->window_size_ + 1, 40);
+    //this->window_size_ = MAX((int)((outstanding_packet_capacity - num_outstanding_packets) - 1), 2); 
+    //this->window_size_ = (outstanding_packet_capacity - num_outstanding_packets);
+     this->window_size_ += 3; //3 is a good number?
   }
   else
   {
-    this->window_size_ = (unsigned int) MAX((int)(this->window_size_ - 5), 5);
-  }
-  */
-
-  //target_amount_of_outstanding_packets = 25;
-
-
-
-  //this->window_size_ = target_amount_of_outstanding_packets;
-
-  num_outstanding_packets = this->last_sent_packet_sequence_number_ - sequence_number_acked;
-
-  //printf("[%lu, %lu]\n", this->last_sent_packet_sequence_number_, sequence_number_acked);
-
-
-  //printf("num_outstanding_packets: %lu\n", num_outstanding_packets);
-
-  //printf("[%lu, %lu]\n", num_outstanding_packets, target_amount_of_outstanding_packets);
-
-
-  if(num_outstanding_packets >= target_amount_of_outstanding_packets)
-  {
-    target_window_size = 2;
-  }
-  else
-  {
-    target_window_size = target_amount_of_outstanding_packets - num_outstanding_packets;
-  }
-
-#if 1
-  if(this->window_size_ > target_window_size)
-  {
-    //printf("DEC: %lu\n", MAX(((this->window_size_ - target_window_size) / 2), 3));
-    this->window_size_ -= MIN(((this->window_size_ - target_window_size) / 2), this->window_size_);
-  }
-  else
-  {
-    //printf("INC: %lu\n", MAX(((target_window_size - this->window_size_) / 2), 5));
-    this->window_size_ += MAX(((target_window_size - this->window_size_) / 2), 10);
-  }
-#endif
-
-#if 0
-  if(this->window_size_ < 2)
-    this->window_size_ = 2;
-  
-  if(this->window_size_ >= 20)
-    this->window_size_ = 20;
-#endif
-
-  //this->window_size_ = target_window_size;
-
-  //printf("this->window_size_: %u\n", this->window_size_);
-
-
-  this->window_size_ = MAX(this->window_size_, 10);
-
-  if(0)
-  {
-    //printf("this->most_recent_rtt_: %lu\n", diff);
-  }
-
-
-  if(0)
-  {
-    printf("this->window_size_: %u\n", this->window_size_);
+    //this->window_size_ = MAX((int)(this->window_size_ - 5), 2); //(num_outstanding_packets - outstanding_packet_capacity);
+    //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 2); 
+    this->window_size_ = 1;
   }
 }
 
@@ -293,10 +159,10 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 unsigned int Controller::timeout_ms( void )
 {
 
-  if( 0)
+  if(1)
   {
-    printf("timeout_ms: %u\n", 0);
+    //printf("timeout_ms %lu\n", this->rtt_estimate_ + 5);
   }
 
-  return 100; /* timeout of one second */
+  return (unsigned int)this->rtt_estimate_ + 5; /* timeout of one second */
 }

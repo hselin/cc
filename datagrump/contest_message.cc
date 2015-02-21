@@ -25,7 +25,8 @@ ContestMessage::Header::Header( const string & str )
     ack_sequence_number( get_header_field( 2, str ) ),
     ack_send_timestamp( get_header_field( 3, str ) ),
     ack_recv_timestamp( get_header_field( 4, str ) ),
-    ack_payload_length( get_header_field( 5, str ) )
+    ack_payload_length( get_header_field( 5, str ) ),
+    sample_bw( get_header_field( 6, str ) )
 {}
 
 /* Parse incoming message from wire */
@@ -56,7 +57,8 @@ string ContestMessage::Header::to_string( void ) const
     + put_header_field( ack_sequence_number )
     + put_header_field( ack_send_timestamp )
     + put_header_field( ack_recv_timestamp )
-    + put_header_field( ack_payload_length );
+    + put_header_field( ack_payload_length )
+    + put_header_field( sample_bw );
 }
 
 /* Make wire representation of message */
@@ -67,7 +69,7 @@ string ContestMessage::to_string( void ) const
 
 /* Transform into an ack of the ContestMessage */
 void ContestMessage::transform_into_ack( const uint64_t sequence_number,
-					 const uint64_t recv_timestamp )
+					 const uint64_t recv_timestamp, float sample_bw )
 {
   /* ack the old sequence number */
   header.ack_sequence_number = header.sequence_number;
@@ -82,6 +84,8 @@ void ContestMessage::transform_into_ack( const uint64_t sequence_number,
 
   /* delete the payload */
   payload.clear();
+
+  header.sample_bw = sample_bw;
 }
 
 /* New message */
@@ -98,7 +102,8 @@ ContestMessage::Header::Header( const uint64_t s_sequence_number )
     ack_sequence_number( -1 ),
     ack_send_timestamp( -1 ),
     ack_recv_timestamp( -1 ),
-    ack_payload_length( -1 )
+    ack_payload_length( -1 ),
+    sample_bw(0)
 {}
 
 /* Is this message an ack? */
