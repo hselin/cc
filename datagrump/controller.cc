@@ -14,7 +14,7 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (30.0f)
+#define TARGET_MAX_LATENCY      (60.0f)
 
 #define RTT_SMOOTHING_ALPHA     (0.3f)
 
@@ -143,8 +143,8 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   if(outstanding_packet_capacity > num_outstanding_packets)
   {
     //this->window_size_ = MAX((int)((outstanding_packet_capacity - num_outstanding_packets) - 1), 2); 
-    //this->window_size_ = (outstanding_packet_capacity - num_outstanding_packets);
-     this->window_size_ += 3; //3 is a good number?
+    this->window_size_ += MIN((outstanding_packet_capacity - num_outstanding_packets) / 2, 5);
+    //this->window_size_ += 5; //3 and 5 is a good number?
   }
   else
   {
