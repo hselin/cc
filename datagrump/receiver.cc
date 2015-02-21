@@ -10,8 +10,8 @@
 
 using namespace std;
 
-#define NUM_MS_IN_TIME_SLICE      (50)
-#define BW_SMOOTHING_ALPHA        (0.3f)
+#define NUM_MS_IN_TIME_SLICE      (10)
+#define BW_SMOOTHING_ALPHA        (0.0f)
 
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))

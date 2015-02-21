@@ -9,7 +9,7 @@
 #define INITIAL_WINDOW_SIZE (5)
 #endif
 
-#define INITIAL_WINDOW_SIZE (25)
+#define INITIAL_WINDOW_SIZE (35)
 #define MAX_WINDOW_SIZE (21)
 
 
@@ -35,7 +35,7 @@ private:
   float estimated_bw_ = 0;
 
 
-  uint64_t rtt_estimate_ = 100;
+  uint64_t rtt_estimate_ = 50;
 
   uint64_t most_recent_rtt_ = 0;
   uint64_t ema_rtt_ = 0; 

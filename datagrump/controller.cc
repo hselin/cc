@@ -14,9 +14,9 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (60.0f)
+#define TARGET_MAX_LATENCY      (50.0f)
 
-#define RTT_SMOOTHING_ALPHA     (0.3f)
+#define RTT_SMOOTHING_ALPHA     (0.1f)
 
 
 bool moo = true;
@@ -150,7 +150,8 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   {
     //this->window_size_ = MAX((int)(this->window_size_ - 5), 2); //(num_outstanding_packets - outstanding_packet_capacity);
     //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 2); 
-    this->window_size_ = 1;
+    //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) / 2), 5); 
+    this->window_size_  = 3;
   }
 }
 
@@ -159,10 +160,10 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 unsigned int Controller::timeout_ms( void )
 {
 
-  if(1)
+  if(0)
   {
     //printf("timeout_ms %lu\n", this->rtt_estimate_ + 5);
   }
 
-  return (unsigned int)this->rtt_estimate_ + 5; /* timeout of one second */
+  return (unsigned int)this->rtt_estimate_ + 3; /* timeout of one second */
 }
