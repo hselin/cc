@@ -180,7 +180,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 
   //printf("[%lu / %lu]\n", num_outstanding_packets, outstanding_packet_capacity);
 
-  //outstanding_packet_capacity += processed_data_packets;
+  outstanding_packet_capacity += processed_data_packets;
 
   if(outstanding_packet_capacity > num_outstanding_packets)
   {
@@ -193,7 +193,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   {
     //this->window_size_ = MAX((int)(this->window_size_ - 5), 2); //(num_outstanding_packets - outstanding_packet_capacity);
     //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 2); 
-    this->window_size_ = 2;
+    this->window_size_ = 0;
   }
 
 
