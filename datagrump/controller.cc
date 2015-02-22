@@ -14,12 +14,13 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (60.0f)
+#define TARGET_MAX_LATENCY      (75.0f)
 
 #define RTT_SMOOTHING_ALPHA     (0.3f)
 
 #define PACKET_PAYLOAD_SIZE     (1424)
 
+#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
 bool moo = true;
 
@@ -41,9 +42,24 @@ bool Controller::send_datagram(void)
 /* Get current window size, in datagrams */
 unsigned int Controller::window_size( void )
 {
-  printf("this->window_size_: %d\n", this->window_size_);
+  //
 
   //return 25000000;
+/*
+  if(this->estimated_bw_ == 0)
+    return INITIAL_WINDOW_SIZE;
+
+  
+ 
+
+
+
+
+  printf("this->window_size_: %d\n", this->window_size_);
+*/
+
+
+
   return this->window_size_;
 }
 
@@ -91,7 +107,7 @@ void Controller::datagram_was_sent( const uint64_t sequence_number,
 }
 
 
-#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+
 
 
 /* An ack was received */
@@ -149,6 +165,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 
   this->amount_of_bytes_received_ += PACKET_PAYLOAD_SIZE;
 
+
   uint64_t outstanding_data_capacity = (TARGET_MAX_LATENCY * estimated_bw);
   uint64_t outstanding_packet_capacity = outstanding_data_capacity / PACKET_PAYLOAD_SIZE;  
   
@@ -159,7 +176,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   uint64_t num_outstanding_packets = DIV_ROUND_UP(num_outstanding_bytes, PACKET_PAYLOAD_SIZE);
   //uint64_t processed_data_capacity = ((this->rtt_estimate_ / 2) * estimated_bw);
   uint64_t processed_data_capacity = (20 * estimated_bw);
-  __attribute__((__unused__)) uint64_t processed_data_packets = processed_data_capacity / ack_payload_length;  
+  __attribute__((__unused__)) uint64_t processed_data_packets = processed_data_capacity / PACKET_PAYLOAD_SIZE;  
 
   //printf("[%lu / %lu]\n", num_outstanding_packets, outstanding_packet_capacity);
 
@@ -176,8 +193,11 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   {
     //this->window_size_ = MAX((int)(this->window_size_ - 5), 2); //(num_outstanding_packets - outstanding_packet_capacity);
     //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 2); 
-    this->window_size_ = 0;
+    this->window_size_ = 2;
   }
+
+
+ 
 }
 
 /* How long to wait (in milliseconds) if there are no acks
@@ -190,5 +210,5 @@ unsigned int Controller::timeout_ms( void )
     //printf("timeout_ms %lu\n", this->rtt_estimate_ + 5);
   }
 
-  return (unsigned int)this->rtt_estimate_ + 5; /* timeout of one second */
+  return (unsigned int)this->rtt_estimate_; /* timeout of one second */
 }

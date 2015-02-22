@@ -10,8 +10,8 @@
 
 using namespace std;
 
-#define NUM_MS_IN_TIME_SLICE      (20)
-#define BW_SMOOTHING_ALPHA        (0.3f)
+#define NUM_MS_IN_TIME_SLICE      (5)
+#define BW_SMOOTHING_ALPHA        (0.1f)
 
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
@@ -53,17 +53,17 @@ int main( int argc, char *argv[] )
 
     uint64_t current_time_ms = timestamp_ms();
     uint64_t time_slice_now = current_time_ms / NUM_MS_IN_TIME_SLICE;
-
     assert(time_slice_now >= current_time_slice);
 
+    uint64_t start_of_current_time_slice_ms = current_time_slice * NUM_MS_IN_TIME_SLICE;
+    assert(current_time_ms >= start_of_current_time_slice_ms);
+    uint64_t elapsed_time = current_time_ms - start_of_current_time_slice_ms + 1;
 
     float sample_bw = 5.0f;
 
     if(time_slice_now == current_time_slice)
     {
-      uint64_t start_of_current_time_slice_ms = current_time_slice * NUM_MS_IN_TIME_SLICE;
-      assert(current_time_ms >= start_of_current_time_slice_ms);
-      uint64_t elapsed_time = MAX(current_time_ms - start_of_current_time_slice_ms, 1);
+      
 
       //printf("message.payload.length(): %ld\n", message.payload.length());
       num_bytes_received_in_time_slice += message.payload.length();
@@ -73,8 +73,9 @@ int main( int argc, char *argv[] )
     }
     else
     {
+      sample_bw = ((float) num_bytes_received_in_time_slice / (float)elapsed_time);
 
-      sample_bw = ((float) num_bytes_received_in_time_slice / (float)NUM_MS_IN_TIME_SLICE);
+      //sample_bw = ((float) num_bytes_received_in_time_slice / (float)NUM_MS_IN_TIME_SLICE);
 
       //
 
