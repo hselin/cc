@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define NUM_MS_IN_TIME_SLICE      (50)
+#define NUM_MS_IN_TIME_SLICE      (20)
 #define BW_SMOOTHING_ALPHA        (0.3f)
 
 #define MAX(x, y) ((x > y) ? (x) : (y))

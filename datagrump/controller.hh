@@ -35,6 +35,9 @@ private:
   float estimated_bw_ = 0;
 
 
+  uint64_t amount_of_bytes_sent_ = 0;
+  uint64_t amount_of_bytes_received_ = 0;
+
   uint64_t rtt_estimate_ = 100;
 
   uint64_t most_recent_rtt_ = 0;
