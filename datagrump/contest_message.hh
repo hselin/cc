@@ -14,7 +14,7 @@ struct ContestMessage
     uint64_t ack_send_timestamp;
     uint64_t ack_recv_timestamp;
     uint64_t ack_payload_length;
-    float    sample_bw;
+    float    estimated_bw;
 
     /* Header for new message */
     Header( const uint64_t s_sequence_number );
@@ -43,7 +43,7 @@ struct ContestMessage
 
   /* Transform into an ack of the ContestMessage */
   void transform_into_ack( const uint64_t sequence_number,
-			   const uint64_t recv_timestamp, const float sample_bw);
+			   const uint64_t recv_timestamp, const float estimated_bw);
 
   /* Is this message an ack? */
   bool is_ack( void ) const;

@@ -93,11 +93,7 @@ void DatagrumpSender::got_ack( const uint64_t timestamp,
 			    ack.header.ack_send_timestamp,
 			    ack.header.ack_recv_timestamp,
 			    timestamp,
-          ack.header.ack_payload_length,
-          ack.header.sample_bw);
-
-  //printf("BW @ %lu : %f\n", timestamp / 1000, ack.header.sample_bw);
-  
+          ack.header.estimated_bw);  
 }
 
 void DatagrumpSender::send_datagram( void )
@@ -117,7 +113,6 @@ void DatagrumpSender::send_datagram( void )
 bool DatagrumpSender::window_is_open( void )
 {
   return sequence_number_ - next_ack_expected_ < controller_.window_size();
-  //return controller_.send_datagram();
 }
 
 int DatagrumpSender::loop( void )

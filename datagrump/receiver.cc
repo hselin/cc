@@ -63,29 +63,19 @@ int main( int argc, char *argv[] )
 
     if(time_slice_now == current_time_slice)
     {
-      
-
-      //printf("message.payload.length(): %ld\n", message.payload.length());
       num_bytes_received_in_time_slice += message.payload.length();
-      
-      
+
       sample_bw = ((float) num_bytes_received_in_time_slice / (float)elapsed_time);
     }
     else
     {
       sample_bw = ((float) num_bytes_received_in_time_slice / (float)elapsed_time);
 
-      //sample_bw = ((float) num_bytes_received_in_time_slice / (float)NUM_MS_IN_TIME_SLICE);
-
-      //
-
       current_time_slice = time_slice_now;
       num_bytes_received_in_time_slice = message.payload.length();
     }
 
     estimated_bw = (BW_SMOOTHING_ALPHA * estimated_bw) + ((1.0f - BW_SMOOTHING_ALPHA) * sample_bw);
-
-    //printf("BW @ %lu : %f\n", current_time_ms / 1000, estimated_bw  * 8 / 1024);
 
     /* assemble the acknowledgment */
     message.transform_into_ack( sequence_number++, recd.timestamp, estimated_bw);
