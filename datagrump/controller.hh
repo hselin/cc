@@ -5,7 +5,7 @@
 
 /* Congestion controller interface */
 
-#define INITIAL_WINDOW_SIZE (1)
+#define INITIAL_WINDOW_SIZE (900)
 
 
 class Controller
