@@ -14,7 +14,7 @@ Controller::Controller( const bool debug )
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
 
-#define TARGET_MAX_LATENCY      (75.0f)
+#define TARGET_MAX_LATENCY      (125.0f)
 
 #define RTT_SMOOTHING_ALPHA     (0.3f)
 
@@ -133,6 +133,16 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
 	 << endl;
   }
 
+
+  if(sequence_number_acked <= this->prev_ack_packet_sequence_number_)
+  {
+    //retransmission
+    printf("@@@@@@@@@@@@\n");
+  }
+
+  this->prev_ack_packet_sequence_number_ = MAX(this->prev_ack_packet_sequence_number_, sequence_number_acked);
+  
+
   if(this->last_sent_packet_sequence_number_ < sequence_number_acked)
   {
     printf("ERROR: %lu %lu\n", this->last_sent_packet_sequence_number_, sequence_number_acked);
@@ -175,7 +185,7 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   //uint64_t num_outstanding_packets = num_outstanding_bytes / PACKET_PAYLOAD_SIZE;
   uint64_t num_outstanding_packets = DIV_ROUND_UP(num_outstanding_bytes, PACKET_PAYLOAD_SIZE);
   //uint64_t processed_data_capacity = ((this->rtt_estimate_ / 2) * estimated_bw);
-  uint64_t processed_data_capacity = (20 * estimated_bw);
+  uint64_t processed_data_capacity = (45 * estimated_bw);
   __attribute__((__unused__)) uint64_t processed_data_packets = processed_data_capacity / PACKET_PAYLOAD_SIZE;  
 
   //printf("[%lu / %lu]\n", num_outstanding_packets, outstanding_packet_capacity);
@@ -185,15 +195,18 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   if(outstanding_packet_capacity > num_outstanding_packets)
   {
     //this->window_size_ = MAX((int)((outstanding_packet_capacity - num_outstanding_packets) - 1), 2); 
-    this->window_size_ += MIN((outstanding_packet_capacity - num_outstanding_packets) / 2, 2);
+    //this->window_size_ += MIN((outstanding_packet_capacity - num_outstanding_packets) / 2, 2);
     //this->window_size_ += 5; //3 and 5 is a good number?
     //this->window_size_ = (outstanding_packet_capacity - num_outstanding_packets);
+
+    this->window_size_ += MIN((outstanding_packet_capacity - num_outstanding_packets), 1);
   }
   else
   {
     //this->window_size_ = MAX((int)(this->window_size_ - 5), 2); //(num_outstanding_packets - outstanding_packet_capacity);
-    //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 2); 
-    this->window_size_ = 0;
+    //this->window_size_ = MAX((int)((num_outstanding_packets - outstanding_packet_capacity) - 1), 1); 
+    //this->window_size_ = MAX((int)(this->window_size_ - (num_outstanding_packets - outstanding_packet_capacity)), 0);
+    this->window_size_ = 1;
   }
 
 

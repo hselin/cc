@@ -9,7 +9,7 @@
 #define INITIAL_WINDOW_SIZE (5)
 #endif
 
-#define INITIAL_WINDOW_SIZE (25)
+#define INITIAL_WINDOW_SIZE (100)
 #define MAX_WINDOW_SIZE (21)
 
 
@@ -28,6 +28,9 @@ private:
   uint64_t current_time_slice_ = 0;
   uint64_t bytes_sent_in_current_time_slice_ = 0;
   uint64_t ms_spent_in_current_time_slice_ = 0;
+
+
+  uint64_t prev_ack_packet_sequence_number_ = 0;
 
   uint64_t last_sent_packet_sequence_number_ = 0;
   uint64_t prev_recv_timestamp_acked_ = 0;
