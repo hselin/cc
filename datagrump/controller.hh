@@ -5,11 +5,8 @@
 
 /* Congestion controller interface */
 
-#if 0
-#define INITIAL_WINDOW_SIZE (5)
-#endif
+#define INITIAL_WINDOW_SIZE (900)
 
-#define INITIAL_WINDOW_SIZE (5)
 
 class Controller
 {
@@ -18,6 +15,12 @@ private:
 
   /* Add member variables here */
   unsigned int window_size_ = INITIAL_WINDOW_SIZE;
+  uint64_t last_sent_packet_sequence_number_ = 0;
+  uint64_t amount_of_bytes_sent_ = 0;
+  uint64_t amount_of_bytes_received_ = 0;
+  uint64_t rtt_estimate_ = 100;
+  uint64_t last_sent_packet_time_ = 0;
+  uint64_t to_time_ = 1;
 
 public:
   /* Public interface for the congestion controller */
@@ -38,11 +41,14 @@ public:
   void ack_received( const uint64_t sequence_number_acked,
 		     const uint64_t send_timestamp_acked,
 		     const uint64_t recv_timestamp_acked,
-		     const uint64_t timestamp_ack_received );
+		     const uint64_t timestamp_ack_received,
+         const float estimated_bw);
 
   /* How long to wait (in milliseconds) if there are no acks
      before sending one more datagram */
   unsigned int timeout_ms( void );
+
+  bool send_datagram(void);
 };
 
 #endif
