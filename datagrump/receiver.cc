@@ -11,7 +11,7 @@
 using namespace std;
 
 #define NUM_MS_IN_TIME_SLICE      (1)
-#define BW_SMOOTHING_ALPHA        (0.1f)
+#define BW_SMOOTHING_ALPHA        (0.0f)
 
 #define MAX(x, y) ((x > y) ? (x) : (y))
 #define MIN(x, y) ((x < y) ? (x) : (y))
