@@ -5,7 +5,7 @@
 
 /* Congestion controller interface */
 
-#define INITIAL_WINDOW_SIZE (900)
+#define INITIAL_WINDOW_SIZE (5000)
 
 
 class Controller
@@ -18,7 +18,7 @@ private:
   uint64_t last_sent_packet_sequence_number_ = 0;
   uint64_t amount_of_bytes_sent_ = 0;
   uint64_t amount_of_bytes_received_ = 0;
-  uint64_t rtt_estimate_ = 100;
+  uint64_t rtt_estimate_ = 0;
   uint64_t last_sent_packet_time_ = 0;
   uint64_t to_time_ = 1;
 
