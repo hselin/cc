@@ -15,7 +15,7 @@ Controller::Controller( const bool debug )
 #define MIN(x, y) ((x < y) ? (x) : (y))
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
-#define TARGET_MAX_LATENCY      (70.0f)
+#define TARGET_MAX_LATENCY      (40.0f)
 #define RTT_SMOOTHING_ALPHA     (0.8f)
 #define PACKET_PAYLOAD_SIZE     (1424)
 
@@ -105,8 +105,8 @@ void Controller::ack_received( const uint64_t sequence_number_acked,
   {
     this->window_size_ += 1;
 
-    if(this->window_size_ > 50)
-      this->window_size_ = 50;
+    if(this->window_size_ > 100)
+      this->window_size_ = 100;
   }
   else
   {
